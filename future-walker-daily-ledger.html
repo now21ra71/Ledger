@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Future Walker · 일일 자산 장부</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F4EFE5;
+    --paper-2:#EFE8DA;
+    --card:#FBF8F1;
+    --ink:#26231C;
+    --ink-soft:#5C564A;
+    --ink-faint:#938C7C;
+    --green:#1F3A30;
+    --green-soft:#2F5547;
+    --bronze:#A8742A;
+    --bronze-soft:#C9A35E;
+    --line:#DAD2C2;
+    --line-strong:#C7BCA6;
+    --good:#2F5547;
+    --shadow:0 1px 0 rgba(0,0,0,.02), 0 8px 24px -16px rgba(38,35,28,.35);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(168,116,42,.05), transparent 40%),
+      radial-gradient(circle at 90% 100%, rgba(31,58,48,.05), transparent 45%);
+    color:var(--ink);
+    font-family:"Noto Sans KR",sans-serif;
+    font-weight:400;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    padding:0 0 64px;
+  }
+  .wrap{max-width:520px;margin:0 auto;padding:0 18px;}
+
+  /* ---------- Header ---------- */
+  header{padding:34px 0 22px;border-bottom:1px solid var(--line);}
+  .brand{
+    font-family:"Fraunces",serif;
+    font-size:11px;letter-spacing:.32em;text-transform:uppercase;
+    color:var(--bronze);font-weight:600;
+  }
+  .brand .dot{color:var(--ink-faint);margin:0 7px;}
+  .datewrap{display:flex;align-items:flex-end;justify-content:space-between;margin-top:14px;gap:14px;}
+  .date-main{font-family:"Nanum Myeongjo",serif;font-weight:800;font-size:30px;line-height:1.1;color:var(--green);letter-spacing:-.01em;}
+  .date-sub{font-size:13px;color:var(--ink-soft);margin-top:4px;}
+  .streak{
+    text-align:right;flex-shrink:0;
+  }
+  .streak .num{font-family:"Fraunces",serif;font-size:34px;font-weight:600;color:var(--bronze);line-height:1;}
+  .streak .lbl{font-size:10.5px;letter-spacing:.14em;color:var(--ink-faint);text-transform:uppercase;margin-top:2px;}
+
+  /* ---------- Deposit meter ---------- */
+  .meter{margin-top:22px;}
+  .meter-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px;}
+  .meter-label{font-size:12px;letter-spacing:.16em;color:var(--ink-soft);text-transform:uppercase;}
+  .meter-pct{font-family:"Fraunces",serif;font-size:17px;font-weight:600;color:var(--green);}
+  .bar{height:7px;background:var(--paper-2);border:1px solid var(--line);border-radius:20px;overflow:hidden;}
+  .bar-fill{height:100%;width:0;border-radius:20px;
+    background:linear-gradient(90deg,var(--bronze) 0%,var(--green-soft) 100%);
+    transition:width .6s cubic-bezier(.22,1,.36,1);}
+
+  /* ---------- Domain cards ---------- */
+  .section-h{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-faint);margin:34px 2px 13px;}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    margin-bottom:13px;overflow:hidden;box-shadow:var(--shadow);
+  }
+  .card-head{display:flex;align-items:center;justify-content:space-between;padding:15px 16px 11px;}
+  .card-title{display:flex;align-items:baseline;gap:9px;}
+  .card-title .nm{font-family:"Nanum Myeongjo",serif;font-weight:800;font-size:18px;color:var(--green);}
+  .card-title .tg{font-size:11px;color:var(--ink-faint);}
+  .card-prog{font-family:"Fraunces",serif;font-size:12px;color:var(--ink-faint);letter-spacing:.05em;}
+  .items{padding:0 8px 6px;}
+  .item{
+    display:flex;align-items:flex-start;gap:13px;padding:12px 8px;cursor:pointer;
+    border-top:1px solid var(--line);user-select:none;transition:opacity .2s;
+  }
+  .item:first-child{border-top:none;}
+  .box{
+    flex-shrink:0;width:23px;height:23px;border:1.5px solid var(--line-strong);border-radius:7px;
+    margin-top:1px;display:flex;align-items:center;justify-content:center;
+    transition:all .25s cubic-bezier(.22,1,.36,1);background:var(--paper);
+  }
+  .box svg{width:13px;height:13px;opacity:0;transform:scale(.4);transition:all .25s cubic-bezier(.34,1.56,.64,1);}
+  .item.on .box{background:var(--green);border-color:var(--green);}
+  .item.on .box svg{opacity:1;transform:scale(1);}
+  .item-body{flex:1;min-width:0;}
+  .item-label{font-size:14.5px;color:var(--ink);line-height:1.45;transition:color .2s;}
+  .item.on .item-label{color:var(--ink-faint);text-decoration:line-through;text-decoration-color:var(--line-strong);}
+  .core-tag{
+    display:inline-block;font-size:9.5px;letter-spacing:.1em;font-weight:700;
+    color:var(--bronze);border:1px solid var(--bronze-soft);border-radius:5px;
+    padding:1px 5px;margin-left:7px;vertical-align:middle;transform:translateY(-1px);
+  }
+
+  /* ---------- Weekly ---------- */
+  .weekly .item-label{font-size:14.5px;}
+  .week-note{font-size:11.5px;color:var(--ink-faint);padding:4px 10px 14px;}
+
+  /* ---------- Schedule (주간 시간표) ---------- */
+  .sched-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:15px 16px 12px;}
+  .sched-title{font-family:"Nanum Myeongjo",serif;font-weight:800;font-size:18px;color:var(--green);}
+  .sched-tabs{display:flex;gap:5px;}
+  .sched-tab{font-family:"Noto Sans KR";font-size:12px;color:var(--ink-faint);background:var(--paper);
+    border:1px solid var(--line);border-radius:20px;padding:4px 13px;cursor:pointer;transition:all .2s;}
+  .sched-tab:active{background:var(--paper-2);}
+  .sched-tab.on{background:var(--green);color:var(--card);border-color:var(--green);}
+  .sched-list{padding:0 16px 4px;}
+  .srow{display:flex;align-items:flex-start;gap:11px;padding:10px 0;border-top:1px solid var(--line);}
+  .srow:first-child{border-top:none;}
+  .stime{flex-shrink:0;width:96px;font-family:"Fraunces",serif;font-size:12.5px;color:var(--ink-faint);
+    letter-spacing:.01em;padding-top:1px;font-variant-numeric:tabular-nums;}
+  .sdot{flex-shrink:0;width:8px;height:8px;border-radius:50%;background:var(--line-strong);margin-top:6px;}
+  .slabel{flex:1;min-width:0;font-size:14px;color:var(--ink);line-height:1.45;}
+  .srow.key{background:rgba(168,116,42,.06);margin:0 -16px;padding-left:16px;padding-right:16px;border-radius:8px;border-top-color:transparent;}
+  .srow.key + .srow{border-top-color:transparent;}
+  .srow.key .sdot{background:var(--bronze);box-shadow:0 0 0 3px rgba(168,116,42,.16);}
+  .srow.key .slabel{color:var(--green);font-weight:500;}
+  .skey-tag{display:inline-block;font-size:9.5px;letter-spacing:.08em;font-weight:700;color:var(--bronze);
+    border:1px solid var(--bronze-soft);border-radius:5px;padding:1px 5px;margin-left:7px;vertical-align:middle;transform:translateY(-1px);}
+  .sched-note{font-size:11.5px;color:var(--ink-faint);padding:8px 16px 15px;line-height:1.55;}
+
+  /* ---------- Heatmap ---------- */
+  .heat-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:17px 16px 15px;box-shadow:var(--shadow);}
+  .heat-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:13px;}
+  .cell{aspect-ratio:1;border-radius:5px;background:var(--paper-2);border:1px solid var(--line);position:relative;}
+  .cell.today{box-shadow:0 0 0 2px var(--bronze);}
+  .cell .d{position:absolute;bottom:2px;right:4px;font-size:8px;color:var(--ink-faint);font-family:"Fraunces",serif;}
+  .heat-legend{display:flex;align-items:center;gap:6px;justify-content:flex-end;margin-top:12px;font-size:10px;color:var(--ink-faint);}
+  .heat-legend .lg{width:12px;height:12px;border-radius:3px;border:1px solid var(--line);}
+
+  /* ---------- Footer / reset ---------- */
+  .quote{font-family:"Nanum Myeongjo",serif;font-style:italic;font-size:14px;color:var(--green-soft);
+    text-align:center;line-height:1.7;margin:30px 14px 22px;}
+  .reset{display:block;margin:0 auto;background:none;border:1px solid var(--line-strong);color:var(--ink-faint);
+    font-family:"Noto Sans KR";font-size:11.5px;letter-spacing:.05em;padding:9px 18px;border-radius:9px;cursor:pointer;transition:all .2s;}
+  .reset:active{background:var(--paper-2);}
+  .saved{text-align:center;font-size:11px;color:var(--ink-faint);margin-top:14px;height:14px;transition:opacity .4s;opacity:0;}
+  .saved.show{opacity:1;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">FUTURE WALKER<span class="dot">·</span>일일 자산 장부</div>
+    <div class="datewrap">
+      <div>
+        <div class="date-main" id="dateMain">—</div>
+        <div class="date-sub" id="dateSub"></div>
+      </div>
+      <div class="streak">
+        <div class="num" id="streakNum">0</div>
+        <div class="lbl">연속 입금 (일)</div>
+      </div>
+    </div>
+    <div class="meter">
+      <div class="meter-top">
+        <span class="meter-label">오늘의 예치율</span>
+        <span class="meter-pct" id="meterPct">0%</span>
+      </div>
+      <div class="bar"><div class="bar-fill" id="barFill"></div></div>
+    </div>
+  </header>
+
+  <div class="section-h">매일의 계좌 — 여섯 영역</div>
+  <div id="domains"></div>
+
+  <div class="section-h">주간 앵커 — 리듬으로</div>
+  <div class="card weekly">
+    <div class="items" id="weekly"></div>
+    <div class="week-note">이번 주 단위로 한 걸음씩. 매일 들여다볼 필요는 없습니다.</div>
+  </div>
+
+  <div class="section-h">주간 시간표 — 하루의 골격</div>
+  <div class="card">
+    <div class="sched-head">
+      <span class="sched-title" id="schedTitle">평일</span>
+      <div class="sched-tabs">
+        <button class="sched-tab" data-v="weekday">평일</button>
+        <button class="sched-tab" data-v="sat">토</button>
+        <button class="sched-tab" data-v="sun">일</button>
+      </div>
+    </div>
+    <div class="sched-list" id="schedList"></div>
+    <div class="sched-note" id="schedNote"></div>
+  </div>
+
+  <div class="section-h">월간 입금 현황 — 최근 5주</div>
+  <div class="heat-card">
+    <div class="heat-grid" id="heat"></div>
+    <div class="heat-legend">
+      <span>적음</span>
+      <span class="lg" style="background:var(--paper-2)"></span>
+      <span class="lg" style="background:#D8CBAF"></span>
+      <span class="lg" style="background:#A8C0AE"></span>
+      <span class="lg" style="background:#5C8770"></span>
+      <span class="lg" style="background:#1F3A30"></span>
+      <span>가득</span>
+    </div>
+  </div>
+
+  <div class="quote" id="quote"></div>
+  <button class="reset" id="resetBtn">오늘 기록 초기화</button>
+  <div class="saved" id="saved">기록 저장됨</div>
+
+</div>
+
+<script>
+/* ---------------- 설정 ---------------- */
+const DOMAINS = [
+  { key:'health',   nm:'건강',          tg:'몸이 자본' },
+  { key:'wealth',   nm:'자산',          tg:'복리의 규율' },
+  { key:'growth',   nm:'자기 성장',     tg:'퇴직 후를 위한 적금' },
+  { key:'children', nm:'자녀',          tg:'함께할 시간은 짧다' },
+  { key:'spouse',   nm:'배우자',        tg:'퇴직 후의 예행연습' },
+  { key:'legacy',   nm:'정렬 · 레거시', tg:'세대를 잇는 설계' },
+];
+
+const ITEMS = [
+  { id:'h1', d:'health',   label:'운동 — 최소 5분이라도 거르지 않기', core:true },
+  { id:'h2', d:'health',   label:'수면·컨디션 점검' },
+  { id:'h3', d:'health',   label:'골프 연습 — 저녁 스윙 루틴' },
+  { id:'w1', d:'wealth',   label:'6시 브리핑 + 오늘 내 판단 한 줄' },
+  { id:'w2', d:'wealth',   label:'매매 절제 — 관찰만, 과잉매매 안 함' },
+  { id:'g1', d:'growth',   label:'자격 공부 1시간 (운용사·부동산)' },
+  { id:'g2', d:'growth',   label:'투자 인사이트 한 줄 기록 (콘텐츠 씨앗)', core:true },
+  { id:'g3', d:'growth',   label:'독서 — 매일 한 챕터' },
+  { id:'c1', d:'children', label:'자녀와 접점 한 번 — 대화·관심' },
+  { id:'c2', d:'children', label:'가족과 대화 — 저녁 한 시간' },
+  { id:'s1', d:'spouse',   label:'배우자와 의식적인 시간' },
+  { id:'l1', d:'legacy',   label:'목표 확인 1분 — 100억·자녀·덕산동', core:true },
+  { id:'l2', d:'legacy',   label:'하루 회고 5분 — 오늘 어느 계좌에 예치했나' },
+];
+
+const WEEKLY = [
+  { id:'wk2', label:'포트폴리오 리뷰 · 매매 실행' },
+  { id:'wk3', label:'덕산동 개발 · 성신 법인 한 걸음' },
+  { id:'wk4', label:'자녀 진로 대화 정기 접점' },
+];
+
+const QUOTES = [
+  "목표를 이루는 것은 의지가 아니라, 매일 반복된 태도다.",
+  "돈만 복리가 아니다. 건강도, 전문성도, 관계도 매일 예치된다.",
+  "퇴직 후 할 일은 그때 시작하는 게 아니라, 오늘 쌓아 둔 것이 꽃핀다.",
+  "거르지 않는 것이 가장 큰 규율이다.",
+  "오늘의 작은 입금이 다음 세대의 잔고가 된다.",
+];
+
+/* 주간 시간표 — 활동별 색(종이 톤) */
+const SC = {
+  golf:'#5C8770', meal:'#C9A35E', study:'#2F5547', read:'#9E8C6F',
+  rest:'#C7BCA6', family:'#B0894E', work:'#C7BCA6', sleep:'#C7BCA6',
+  child:'#A8742A', write:'#4F6F76'
+};
+const SCHEDULE = {
+  weekday:{ label:'평일', note:'새벽 집필(월·수·금) + 업무 후 루틴 · 시간은 골격일 뿐, 컨디션에 맞춰 유연하게.', rows:[
+    { t:'06:00–07:00', a:'뉴스레터 집필 · 월·수·금', c:'write'  },
+    { t:'~18:00',      a:'업무',                     c:'work'   },
+    { t:'18:00–19:30', a:'골프 연습',                c:'golf'   },
+    { t:'19:30–20:30', a:'가족과 대화',              c:'family' },
+    { t:'20:30–21:30', a:'투자자산운용사 공부',      c:'study'  },
+    { t:'21:30–22:30', a:'독서',                     c:'read'   },
+    { t:'22:30',       a:'취침',                      c:'sleep'  },
+  ]},
+  sat:{ label:'토요일', note:'17:00 규흠이와 메타인지 수업 — 저녁 식사는 18:30으로 조정했습니다.', rows:[
+    { t:'07:00–07:30', a:'조깅',                c:'golf'   },
+    { t:'07:30–08:00', a:'조식',                c:'meal'   },
+    { t:'08:00–11:00', a:'골프 연습',           c:'golf'   },
+    { t:'11:00–13:00', a:'점심 · 휴식',         c:'meal'   },
+    { t:'13:00–15:00', a:'투자자산운용사 공부', c:'study'  },
+    { t:'15:00–17:00', a:'휴식',                c:'rest'   },
+    { t:'17:00–18:30', a:'규흠이와 메타인지 수업', c:'child' },
+    { t:'18:30–20:00', a:'저녁 식사',           c:'meal'   },
+    { t:'20:00–22:00', a:'휴식 · 독서',         c:'read'   },
+  ]},
+  sun:{ label:'일요일', note:'오전은 골프, 오후엔 공부 한 블록 · 저녁은 가볍게 독서로 마무리.', rows:[
+    { t:'07:00–07:30', a:'조깅',                c:'golf'   },
+    { t:'07:30–08:00', a:'조식',                c:'meal'   },
+    { t:'08:30–12:00', a:'골프 연습 · 점심',    c:'golf'   },
+    { t:'12:00–13:00', a:'휴식',                c:'rest'   },
+    { t:'13:00–15:00', a:'투자자산운용사 공부', c:'study'  },
+    { t:'15:00–18:00', a:'휴식 · 집정리',       c:'rest'   },
+    { t:'18:00–20:00', a:'저녁 식사',           c:'meal'   },
+    { t:'20:00–22:00', a:'휴식 · 독서',         c:'read'   },
+  ]},
+};
+let schedView = 'weekday';
+
+const CORE_IDS = ITEMS.filter(i=>i.core).map(i=>i.id);
+const TOTAL = ITEMS.length;
+
+/* ---------------- 저장소 (localStorage — 호스팅 환경에서도 영구 저장) ---------------- */
+const KEY = 'fw_ledger_v1';
+let mem = { days:{}, weeks:{} };
+
+function loadAll(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw){ mem = JSON.parse(raw); }
+  }catch(e){ /* 키 없음·차단 → 새로 시작 */ }
+  if(!mem.days) mem.days={};
+  if(!mem.weeks) mem.weeks={};
+}
+let saveTimer=null;
+function saveAll(){
+  flashSaved();
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{
+    try{ localStorage.setItem(KEY, JSON.stringify(mem)); }
+    catch(e){ console.error('save failed', e); }
+  },150);
+}
+
+/* ---------------- 날짜 ---------------- */
+function ymd(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function weekKey(d){
+  const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  const day=t.getUTCDay()||7; t.setUTCDate(t.getUTCDate()+4-day);
+  const ys=new Date(Date.UTC(t.getUTCFullYear(),0,1));
+  const wn=Math.ceil((((t-ys)/86400000)+1)/7);
+  return t.getUTCFullYear()+'-W'+String(wn).padStart(2,'0');
+}
+const KDAY=['일','월','화','수','목','금','토'];
+const today=new Date();
+const TKEY=ymd(today);
+const WK=weekKey(today);
+
+/* ---------------- 상태 ---------------- */
+function dayArr(k){ return mem.days[k] || (mem.days[k]=[]); }
+function isOn(k,id){ return dayArr(k).includes(id); }
+function toggle(k,id){
+  const a=dayArr(k); const i=a.indexOf(id);
+  if(i>=0) a.splice(i,1); else a.push(id);
+  if(a.length===0) delete mem.days[k];
+}
+function weekOn(id){ return (mem.weeks[WK]||[]).includes(id); }
+function weekToggle(id){
+  if(!mem.weeks[WK]) mem.weeks[WK]=[];
+  const a=mem.weeks[WK]; const i=a.indexOf(id);
+  if(i>=0) a.splice(i,1); else a.push(id);
+  if(a.length===0) delete mem.weeks[WK];
+}
+
+/* ---------------- 렌더 ---------------- */
+function renderHeader(){
+  document.getElementById('dateMain').textContent =
+    `${today.getMonth()+1}월 ${today.getDate()}일 (${KDAY[today.getDay()]})`;
+  document.getElementById('dateSub').textContent = `${today.getFullYear()}년 · 정년까지 약 6년 — 오늘도 한 칸 전진`;
+  document.getElementById('quote').textContent = '“'+QUOTES[today.getDate()%QUOTES.length]+'”';
+}
+
+function renderDomains(){
+  const root=document.getElementById('domains'); root.innerHTML='';
+  DOMAINS.forEach(dom=>{
+    const its=ITEMS.filter(i=>i.d===dom.key);
+    const done=its.filter(i=>isOn(TKEY,i.id)).length;
+    const card=document.createElement('div'); card.className='card';
+    card.innerHTML=`<div class="card-head">
+        <div class="card-title"><span class="nm">${dom.nm}</span><span class="tg">${dom.tg}</span></div>
+        <div class="card-prog">${done} / ${its.length}</div>
+      </div><div class="items"></div>`;
+    const box=card.querySelector('.items');
+    its.forEach(it=>box.appendChild(itemRow(it,TKEY)));
+    root.appendChild(card);
+  });
+}
+function itemRow(it,k){
+  const on=isOn(k,it.id);
+  const row=document.createElement('div');
+  row.className='item'+(on?' on':'');
+  row.innerHTML=`<div class="box"><svg viewBox="0 0 24 24" fill="none" stroke="#F4EFE5" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+    <div class="item-body"><span class="item-label">${it.label}${it.core?'<span class="core-tag">필수</span>':''}</span></div>`;
+  row.addEventListener('click',()=>{ toggle(k,it.id); refreshAfterToggle(); saveAll(); });
+  return row;
+}
+function renderWeekly(){
+  const root=document.getElementById('weekly'); root.innerHTML='';
+  WEEKLY.forEach(w=>{
+    const on=weekOn(w.id);
+    const row=document.createElement('div');
+    row.className='item'+(on?' on':'');
+    row.innerHTML=`<div class="box"><svg viewBox="0 0 24 24" fill="none" stroke="#F4EFE5" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="item-body"><span class="item-label">${w.label}</span></div>`;
+    row.addEventListener('click',()=>{ weekToggle(w.id); row.classList.toggle('on'); saveAll(); });
+    root.appendChild(row);
+  });
+}
+
+function todayType(){
+  const g=today.getDay();              // 0 일 … 6 토
+  return g===0 ? 'sun' : (g===6 ? 'sat' : 'weekday');
+}
+function renderSchedule(){
+  const day=SCHEDULE[schedView];
+  document.getElementById('schedTitle').textContent=day.label;
+  const list=document.getElementById('schedList'); list.innerHTML='';
+  day.rows.forEach(r=>{
+    const key=(r.c==='child');
+    const row=document.createElement('div');
+    row.className='srow'+(key?' key':'');
+    const dotStyle=key?'':('background:'+(SC[r.c]||'var(--line-strong)'));
+    row.innerHTML=`<span class="stime">${r.t}</span>`+
+      `<span class="sdot" style="${dotStyle}"></span>`+
+      `<span class="slabel">${r.a}${key?'<span class="skey-tag">규흠</span>':''}</span>`;
+    list.appendChild(row);
+  });
+  document.getElementById('schedNote').textContent=day.note;
+  document.querySelectorAll('.sched-tab').forEach(t=>t.classList.toggle('on',t.dataset.v===schedView));
+}
+function setupSchedule(){
+  document.querySelectorAll('.sched-tab').forEach(t=>{
+    t.addEventListener('click',()=>{ schedView=t.dataset.v; renderSchedule(); });
+  });
+  schedView=todayType();
+  renderSchedule();
+}
+
+function renderMeter(){
+  const done=dayArr(TKEY).filter(id=>ITEMS.some(i=>i.id===id)).length;
+  const pct=Math.round(done/TOTAL*100);
+  document.getElementById('meterPct').textContent=pct+'%';
+  document.getElementById('barFill').style.width=pct+'%';
+}
+
+function coreComplete(k){ const a=mem.days[k]||[]; return CORE_IDS.every(id=>a.includes(id)); }
+function renderStreak(){
+  let n=0; const d=new Date(today);
+  if(!coreComplete(ymd(d))) d.setDate(d.getDate()-1); // 오늘 미완료면 어제부터
+  while(coreComplete(ymd(d))){ n++; d.setDate(d.getDate()-1); }
+  document.getElementById('streakNum').textContent=n;
+}
+
+function heatColor(rate){
+  if(rate===0) return 'var(--paper-2)';
+  if(rate<0.34) return '#D8CBAF';
+  if(rate<0.67) return '#A8C0AE';
+  if(rate<1)    return '#5C8770';
+  return '#1F3A30';
+}
+function renderHeat(){
+  const root=document.getElementById('heat'); root.innerHTML='';
+  // 오늘이 포함된 주의 토요일까지 채우고 5주(35칸) 표시
+  const end=new Date(today); end.setDate(end.getDate()+(6-end.getDay()));
+  const start=new Date(end); start.setDate(start.getDate()-34);
+  for(let i=0;i<35;i++){
+    const d=new Date(start); d.setDate(start.getDate()+i);
+    const k=ymd(d);
+    const cnt=(mem.days[k]||[]).filter(id=>ITEMS.some(it=>it.id===id)).length;
+    const rate=cnt/TOTAL;
+    const cell=document.createElement('div');
+    cell.className='cell'+(k===TKEY?' today':'');
+    cell.style.background=heatColor(d>today?0:rate);
+    if(d.getDate()===1||i===0){ cell.innerHTML=`<span class="d">${d.getMonth()+1}/${d.getDate()}</span>`; }
+    root.appendChild(cell);
+  }
+}
+
+function refreshAfterToggle(){ renderDomains(); renderMeter(); renderStreak(); renderHeat(); }
+
+let savedTimer=null;
+function flashSaved(){
+  const el=document.getElementById('saved'); el.classList.add('show');
+  clearTimeout(savedTimer); savedTimer=setTimeout(()=>el.classList.remove('show'),1400);
+}
+
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  if(confirm('오늘 날짜의 체크 기록을 모두 지울까요? (주간 항목·지난 기록은 유지됩니다)')){
+    delete mem.days[TKEY]; refreshAfterToggle(); saveAll();
+  }
+});
+
+/* ---------------- 시작 ---------------- */
+(function init(){
+  loadAll();
+  renderHeader();
+  renderDomains();
+  renderWeekly();
+  setupSchedule();
+  renderMeter();
+  renderStreak();
+  renderHeat();
+})();
+</script>
+</body>
+</html>
